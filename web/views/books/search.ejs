@@ -1,0 +1,37 @@
+<div class="row my-5">
+    <div class="col">
+        <h1 class="text-center">Book Search</h1>
+        <div id="div_books"></div>
+    </div>
+</div>
+<script type="x-handlebars-template" id="temp_books">
+    <table class = "table">
+    {{#each documents}}
+        <tr>
+            <td><img src="{{thumbnail}}" width="50"></td>
+            <td>{{title}}</td>
+            <td>{{price}}</td>
+            <td>{{authors}}</td>
+  
+        </tr>
+    {{/each}}
+    </table>
+</script>
+<script>
+    getBooks();
+    //도서검색 데이터 불러오깅
+    function getBooks(){
+        $.ajax({
+            type:"get",
+            url:"https://dapi.kakao.com/v3/search/book?target=title",
+            headers:{"Authorization":"KakaoAK 0ce6a96a5ed5d1b040aba0dc387cc85c"},
+            data:{query:"html", page:1, size:5},
+            success:function(data){
+                 //console.log(data);
+                 let temp=Handlebars.compile($("#temp_books").html());
+                 $("#div_books").html(temp(data));
+            }   
+        
+        })
+    }
+</script>
