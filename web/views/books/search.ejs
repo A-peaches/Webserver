@@ -1,7 +1,22 @@
 <div class="row my-5">
     <div class="col">
         <h1 class="text-center">Book Search</h1>
+        <div class="row mb-2 justify-content-end">
+            <form name="frm" class = "col-6 col-md-4 col-lg-3">
+                <div class="input-group">
+                    <input name="query" class="form-cotrol" value="자바">
+                    <button class="btn btn-secondary">Search</button>
+                </div>
+            </form>
+        </div>
+        <hr>
         <div id="div_books"></div>
+        <!--페이지 이동-->
+        <div class= "text-center">
+            <button id = "prev" class="btn btn-secondary">이전</button>
+            <span class="mx-3" id="span_page">1/10</span>
+            <button id = "next" class= "btn btn-secondary">다음</button>
+        </div>
     </div>
 </div>
 <script type="x-handlebars-template" id="temp_books">
@@ -18,6 +33,27 @@
     </table>
 </script>
 <script>
+    let query=$(frm.query).val();
+    let page=1;
+
+    $("#next").on("click",function(){
+        page++;
+        getBooks();
+    });
+
+    $("#prev").on("click",function(){
+        page--;
+        getBooks();
+    });
+
+    
+    $(frm).on("submit",function(e){
+        e.preventDefault();
+        page=1
+        query=$(frm.query).val();
+        getBooks();
+    });
+
     getBooks();
     //도서검색 데이터 불러오깅
     function getBooks(){
@@ -25,11 +61,19 @@
             type:"get",
             url:"https://dapi.kakao.com/v3/search/book?target=title",
             headers:{"Authorization":"KakaoAK 0ce6a96a5ed5d1b040aba0dc387cc85c"},
-            data:{query:"html", page:1, size:5},
+            data:{query:query, page:page, size:5},
             success:function(data){
-                 //console.log(data);
+                 console.log(data);
                  let temp=Handlebars.compile($("#temp_books").html());
                  $("#div_books").html(temp(data));
+                 let last = Math.ceil(data.meta.pageable_count/5);
+                 $("#span_page").html(page + "/" + last);
+                 
+                 if(page==1) $("#prev").attr("disabled",true)
+                 else $("#prev").attr("disabled", false)
+
+                 if(data.meta.is_end) $("#next").attr("disabled",true);
+                 else $("#next").attr("disabled", false);
             }   
         
         })
