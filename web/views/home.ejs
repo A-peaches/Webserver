@@ -40,13 +40,15 @@
             </div>
             <div class="card-footer text-center">
                 {{fmtPrice price}}
-                <i class="bi bi-bag-heart float-end" book="{{book @this}}"></i>
+                <i class="cart bi bi-bag-heart float-end" book="{{book @this}}"></i>
             </div>
         </div>
     </div>
     <%-include('books/modal.ejs')%>
     {{/each}}
   </script>
+  <!-- @index는 몇번쨰인지를 가져오는거고 @this 는 오브젝트임! 핸들바에서제공하는 변수명
+   오브젝트를 string으로 바꾸줘야 입력이가능함 . 그걸다시 오브젝트로 바꿔서 출력. -->
 <!--Handlebars 함수-->
 <script>
     Handlebars.registerHelper("chkImage", function(image){
@@ -56,19 +58,19 @@
             return "https://via.placeholder.com/120x170"
         }
     });
-
+    //앞에꺼가 함수명, 뒤에가 매개변수값
     Handlebars.registerHelper("fmtPrice", function(price){
         if(price) return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',') + '원';
     });
 
     Handlebars.registerHelper("book", function(book){
-        return JSON.stringify(book);
+        return JSON.stringify(book); //스트링으로 바꿔줌!
     })
 
 </script>
 <script type="module">
     import { app } from '/javascripts/firebaseInit.js';
-    import { getDatabase, ref, set, get } 
+    import { getDatabase, ref, set, get } //어디에쓸껀지 주소 reference
     from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
     const db=getDatabase(app);
 
@@ -78,12 +80,15 @@
 
 
     //장바구니 아이콘을 클릭했을 때
-    $("#div_books").on("click", ".bi-bag-heart", async function(){
+    //ID는 #, Class name은 . , name은 아무것도 안붙음!
+    $("#div_books").on("click", ".cart", async function(){
         if(!sessionStorage.getItem("email")){
+            alert("로그인이 되지 않았습니다!")
             location.href="/users/login";
         }else{
             //장바구니에 상품정보 저장
-            const book=JSON.parse($(this).attr("book"));
+            const book=JSON.parse($(this).attr("book")); 
+            //string을다시 오브젝트로. 현재 장바구니에 담을 책정보
             console.log(book)
             const ref_book = `cart/${sessionStorage.getItem("uid")}/${book.isbn}`;
             //장바구니에 도서가 있는지 확인 !
@@ -91,7 +96,7 @@
             if(snapshot.val()){
                 alert("이미 등록된 도서입니다.")
             }else{
-                if(!confirm("장바구니에 저장하실래요?")) return;
+                if(!confirm("장바구니에 저장하실래요?")) return; //안넣으면 return해서 빠쪄나가기
                 set(ref(db, ref_book),book);
                 alert("장바구니에 추가되었습니다.");
             }

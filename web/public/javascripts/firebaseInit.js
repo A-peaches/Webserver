@@ -7,15 +7,16 @@
  // Your web app's Firebase configuration
  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
  const firebaseConfig = {
-   apiKey: "AIzaSyAkfTjkcNolZ26eGzT_bRsHcbfurstom60",
-   authDomain: "webserver-c6a99.firebaseapp.com",
-   projectId: "webserver-c6a99",
-   storageBucket: "webserver-c6a99.appspot.com",
-   messagingSenderId: "659605449224",
-   appId: "1:659605449224:web:7aa494256743cde0fdbfbd",
-   measurementId: "G-VL8FCE7YY6"
+  apiKey: "AIzaSyAkfTjkcNolZ26eGzT_bRsHcbfurstom60",
+  authDomain: "webserver-c6a99.firebaseapp.com",
+  databaseURL: "https://webserver-c6a99-default-rtdb.firebaseio.com",
+  projectId: "webserver-c6a99",
+  storageBucket: "webserver-c6a99.appspot.com",
+  messagingSenderId: "659605449224",
+  appId: "1:659605449224:web:7aa494256743cde0fdbfbd",
+  measurementId: "G-VL8FCE7YY6"
  };
 
  // Initialize Firebase
- export const app = initializeApp(firebaseConfig);
+ export const app = initializeApp(firebaseConfig); // 중요!
  const analytics = getAnalytics(app);

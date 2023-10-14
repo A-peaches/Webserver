@@ -12,8 +12,11 @@
           <li class="nav-item">
             <a class="nav-link active" aria-current="page" href="/locals">Local Search</a>
           </li>
+          <li class="nav-item" id="cart" style="display:none;">
+            <a class="nav-link active" aria-current="page" href="/books/cart">Cart</a>
+          </li>
         </ul>
-        <ul class="navbar-nav d-flex">
+        <ul class="navbar-nav d-flex"> 
             <li class="nav-item" id="login">
               <a class="nav-link active" aria-current="page" href="/users/login">LOGIN</a>
             </li>
@@ -21,6 +24,7 @@
               <a class="nav-link active" aria-current="page" href="/users/login">E-Mail</a>
             </li>
             <li class="nav-item" id="logout" style="display:none;">
+              <!--로그인 안했을떈 보이면 안되어서 none-->
               <a class="nav-link active" aria-current="page" href="/users/login">LOGOUT</a>
             </li>
           </ul>
@@ -29,14 +33,14 @@
   </nav>
   <script>
     if(sessionStorage.getItem("email")){
-      $("#login, #email, #logout").toggle();
+      $("#login, #email, #logout, #cart").toggle(); //있으면! 보이는건안보이게~안보이던건 보이게
       $("#email a").html(sessionStorage.getItem("email"));
     }
 
     $("#logout").on("click", "a", function(e){
       e.preventDefault();
       if(confirm("정말로 로그아웃하실래요?")){
-        sessionStorage.clear();
+        sessionStorage.clear(); //로그인정보 삭제
         location.href="/";
       }
     })

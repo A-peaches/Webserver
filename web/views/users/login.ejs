@@ -42,6 +42,7 @@
         }else{
             signInWithEmailAndPassword(auth, email, password).then(success=>{
                 console.log(success);
+                alert("로그인에 성공하였습니다!");
                 sessionStorage.setItem("email", email);
                 sessionStorage.setItem("uid", success.user.uid);
                 location.href="/";
