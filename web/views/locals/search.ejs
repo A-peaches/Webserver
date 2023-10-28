@@ -1,83 +1,131 @@
 <div class="row my-5">
     <div class="col">
-        <h1 class="text-center">지역검색</h1>
-        <div class="col">
-            <div class="row mb-2 justify-content-end">
-                <form name="frm" class = "col-6 col-md-4 col-lg-3">
+        <h1 class="text-center mb-5">지역검색</h1>
+        <div class="row justify-content-end">
+            <form class="col-6 col-lg-3 col-md-4" name="frm">
                     <div class="input-group">
-                        <input name="query" class="form-cotrol" value="인하대학교">
-                        <button class="btn btn-secondary">Search</button>
+                    <input class="form-control" placeholder="검색어" name="query" value="인하">
+                    <button class="btn btn-primary">검색</button>
                     </div>
-                </form>
-            </div>
-            <hr>
-        <div id="div_locals"></div>
-        <!--페이지 이동-->
-        <div class= "text-center">
-            <button id = "prev" class="btn btn-secondary">이전</button>
+            </form>
+        </div>
+        <hr>
+        <div id="div_locals" class="row"></div>
+        <div class="text-center mt-3" id="div_page">
+            <button class="btn btn-primary" id="prev">이전</button>
             <span class="mx-3" id="span_page">1/10</span>
-            <button id = "next" class= "btn btn-secondary">다음</button>
+            <button class="btn btn-primary" id="next">다음</button>
         </div>
     </div>
 </div>
-<!--템플릿-->
 <script type="x-handlebars-template" id="temp_locals">
     <table class="table">
-        {{#each documents}}
+    {{#each documents}}
         <tr>
-            <td>{{place_name}}</td>
+            <td class="place">{{place_name}}</td>
             <td>{{address_name}}</td>
-            <td>{{phone}}</td>
-
+            <td class="phone">{{phone}}</td>
+            <td><button class="btn btn-primary btn-sm" local="{{toString @this}}">즐겨찾기</td>
         </tr>
-        {{/each}}
-    </table>
+    {{/each}}
 </script>
-<script>
-    let page=1;
-    let query=$(frm.query).val();
+<script> 
+    Handlebars.registerHelper("toString", function(local){
+        return JSON.stringify(local); //object -> string 변환
+    });
+</script>
+<script type="module">
+    import { app } from '/javascripts/firebaseInit.js';
+    import { getDatabase, ref, set, get }
+    from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+    const db=getDatabase(app);
 
-    $(frm).on("submit",function(e){
-        e.preventDefault();
-        query=$(frm.query).val();
+let query=$(frm.query).val();
+let page=1;
+
+
+$(frm).on("submit", function(e){
+    e.preventDefault();
+    query=$(frm.query).val();
+    if(query==""){
+        alert("검색 내용을 입력하세요!");
+        $(frm.qurey).focus();
+    }else{
         page=1;
         getLocals();
-    });
+    }
+});
 
-     //다음 버튼을 클릭한 경우
-     $("#next").on("click",function(){
-        page++;
-        getLocals();
-    });
 
-    //이전 버튼을 클릭한 경우
-    $("#prev").on("click",function(){
-        page--;
-        getLocals();
-    });
+// 즐겨찾기 버튼 클릭시
 
+$("#div_locals").on("click",".btn-sm",async function(){
+    if(!sessionStorage.getItem("email")){
+        sessionStorage.setItem("target","/locals")
+        location.href='/users/login';
+    }else{ //로그인이 된경우
+        const local=JSON.parse($(this).attr("local"));
+        console.log(local);
+        const ref_local=`favorite/${sessionStorage.getItem("uid")}/${local.id}`;
+        const snapshot=await get(ref(db,ref_local));
+        //async와 await이없는 비동기함수일경우, 동시에실행시 
+        //snapshot내용이 있기 전 찍으면 에러발생.
+        if(snapshot.val()){
+            alert('이미 등록되었습니다!');
+        }else{
+            set(ref(db, ref_local),local);
+            alert('즐겨찾기 등록이 완료되었습니다!');
+        }
+
+    }
+});
+
+$("#next").on("click", function(){
+    page++
     getLocals();
-    function getLocals(){
-        $.ajax({
+}) //다음 페이지
+
+$("#prev").on("click", function(){
+    page--
+    getLocals();
+}) //이전 페이지
+
+getLocals();
+function getLocals(){
+    $.ajax({
             type:"get",
             url:"https://dapi.kakao.com/v2/local/search/keyword.json",
             headers:{"Authorization":"KakaoAK 0ce6a96a5ed5d1b040aba0dc387cc85c"},
             data:{page: page, query:query, size:5},
 
-            success:function(data){
-                console.log(data);
-                let temp=Handlebars.compile($("#temp_locals").html());
-                 $("#div_locals").html(temp(data));
-                 
-                 let last = Math.ceil(data.meta.pageable_count/5);
-                 $("#span_page").html(page + "/" + last);
-                 
-                 if(page==1) $("#prev").attr("disabled",true)
-                 else $("#prev").attr("disabled", false)
+        success:function(data){
+            let temp=Handlebars.compile($("#temp_locals").html());
+            $("#div_locals").html(temp(data));
 
-                 if(data.meta.is_end) $("#next").attr("disabled",true);
-                 else $("#next").attr("disabled", false);
+            if(page==1) {
+                $("#prev").attr("disabled", true);
+            } else {
+                $("#prev").attr("disabled", false);
+            } // 1페이지에서는 페이지 넘기는 기능을 disabled. 1페이지아닐경우 false.
+
+            if(data.meta.is_end){
+                $('#next').attr("disabled", true);
+            } else {
+                $('#next').attr("disabled", false);
             }
-        });
-    }
+
+            let last=Math.ceil(data.meta.pageable_count/5);
+            // 마지막 페이지가 몇페이지인지 계산하는 함수.
+
+            if(data.meta.pageable_count>0){
+                $("div_page").show(); 
+                $("#span_page").html(page+"/"+last); 
+                // page 는 현재페이지, last 마지막페이지
+            } else {
+                $("#div_page").hide();
+                $("#div_locals").html(`<h1 class='text-center'>'${query}' 도서가 존재하지 않습니다.</hl1>`)
+            }
+        }
+    })
+}
 </script>

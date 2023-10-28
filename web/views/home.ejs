@@ -1,158 +1,174 @@
 <style>
     #div_books img {
-        cursor : pointer;
+        cursor: pointer;
     }
-    #div_books .bi-bag-heart {
+
+    #div_books .card-footer .bi {
         cursor : pointer;
-        color : red;
-        font-weight : 200;
+        color : green;
     }
+
 </style>
-<div class ="row my-5">
+
+<div class="row my-5">
     <div class="col">
-        <div class="row mb-2 justify-content-end">
-            <form name="frm" class = "col-6 col-md-4 col-lg-3">
-                <div class="input-group">
-                    <input name="query" class="form-cotrol" value="자바">
-                    <button class="btn btn-secondary">Search</button>
-                </div>
+        <div class="row justify-content-end">
+            <form class="col-6 col-lg-3 col-md-4" name="frm">
+                    <div class="input-group">
+                    <input class="form-control" placeholder="검색어" name="query" value="자바">
+                    <button class="btn btn-primary">검색</button>
+                    </div>
             </form>
         </div>
-
-        <!--검색결과 출력-->
+        <hr>
         <div id="div_books" class="row"></div>
-            <!--페이지 이동-->
-        <div class= "text-center">
-            <button id = "prev" class="btn btn-secondary">이전</button>
+        <div class="text-center mt-3" id="div_page">
+            <button class="btn btn-primary" id="prev">이전</button>
             <span class="mx-3" id="span_page">1/10</span>
-            <button id = "next" class= "btn btn-secondary">다음</button>
+            <button class="btn btn-primary" id="next">다음</button>
         </div>
     </div>
 </div>
-<!--도서정보 출력 템플릿-->
-<script type="x-handlebars-template" id="temp_books">
+
+
+
+<script id="temp_books" type="x-handlebars-template">
     {{#each documents}}
-        <div class="col-6 col-md-4 col-lg-2 mb-2">
+        <div class="col-6 col-md-4 col-lg-2 my-2">
             <div class="card">
-                 <div class="card-body">
-                   <img src="{{chkImage thumbnail}}" width="90%" index="{{@index}}">
-                   <div class="ellipsis text-center">{{title}}</div>
-            </div>
-            <div class="card-footer text-center">
-                {{fmtPrice price}}
-                <i class="cart bi bi-bag-heart float-end" book="{{book @this}}"></i>
+                <div class="card-body">
+                    <img src="{{chk_thumbnail thumbnail}}" index="{{@index}}" width="90%">
+                    <div class="mt-2 ellipsis" style="font-size:0.8rem;">{{title}}</div>
+                </div>
+                <div class="card-footer">
+                    <div>
+                        <span style="font-size:0.6rem;">{{fmt_price price}}</span>
+                        <i class="bi bi-cart float-end" book="{{book @this}}"></i> 
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    <%-include('books/modal.ejs')%>
+        <%-include("./books/modal.ejs")%>
     {{/each}}
-  </script>
-  <!-- @index는 몇번쨰인지를 가져오는거고 @this 는 오브젝트임! 핸들바에서제공하는 변수명
-   오브젝트를 string으로 바꾸줘야 입력이가능함 . 그걸다시 오브젝트로 바꿔서 출력. -->
-<!--Handlebars 함수-->
+</script>
+
 <script>
-    Handlebars.registerHelper("chkImage", function(image){
-        if(image){
-            return image;
+
+    Handlebars.registerHelper("chk_thumbnail", function(thumbnail){
+        if(!thumbnail) {
+            return "http://via.placeholder.com/120x170";
         }else{
-            return "https://via.placeholder.com/120x170"
+            return thumbnail;
         }
     });
-    //앞에꺼가 함수명, 뒤에가 매개변수값
-    Handlebars.registerHelper("fmtPrice", function(price){
-        if(price) return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',') + '원';
+
+    Handlebars.registerHelper("fmt_price", function(price){
+        if(price) return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',')+'원';
     });
 
+
+
     Handlebars.registerHelper("book", function(book){
-        return JSON.stringify(book); //스트링으로 바꿔줌!
-    })
+        return JSON.stringify(book);
+    });
 
 </script>
+
 <script type="module">
     import { app } from '/javascripts/firebaseInit.js';
-    import { getDatabase, ref, set, get } //어디에쓸껀지 주소 reference
+    import { getDatabase, ref, set, get }
     from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
     const db=getDatabase(app);
 
 
-    let query=$(frm.query).val();
-    let page=1;
+let query=$(frm.query).val();
+let page=1;
 
+    $("#div_books").on("click", ".bi-cart", async function(){
+        const book= JSON.parse($(this).attr("book"));
+        if(sessionStorage.getItem("email")){
+            const uid=sessionStorage.getItem("uid");
+            const ref_book=ref(db,`cart/${uid}/${book.isbn}`);
+            
+            const snapshot=await get(ref_book)
 
-    //장바구니 아이콘을 클릭했을 때
-    //ID는 #, Class name은 . , name은 아무것도 안붙음!
-    $("#div_books").on("click", ".cart", async function(){
-        if(!sessionStorage.getItem("email")){
-            alert("로그인이 되지 않았습니다!")
-            location.href="/users/login";
-        }else{
-            //장바구니에 상품정보 저장
-            const book=JSON.parse($(this).attr("book")); 
-            //string을다시 오브젝트로. 현재 장바구니에 담을 책정보
-            console.log(book)
-            const ref_book = `cart/${sessionStorage.getItem("uid")}/${book.isbn}`;
-            //장바구니에 도서가 있는지 확인 !
-            const snapshot = await get(ref(db, ref_book));
             if(snapshot.val()){
-                alert("이미 등록된 도서입니다.")
-            }else{
-                if(!confirm("장바구니에 저장하실래요?")) return; //안넣으면 return해서 빠쪄나가기
-                set(ref(db, ref_book),book);
-                alert("장바구니에 추가되었습니다.");
+                alert("장바구니에 이미 존재하는 도서입니다!");
+            } else {
+                if(!confirm("장바구니에 저장하실래요??")) return;
+                await set(ref_book, book);
+                alert("장바구니에 등록되었습니다.");
             }
-
+        } else {
+            location.href="/users/login";
         }
     });
 
-    //이미지를 클릭했을 때
-
     $("#div_books").on("click","img", function(){
-        let index=$(this).attr("index");
-        //alert(index);
-        $("#modal" + index).modal("show");
-    })
-
-    //다음 버튼을 클릭한 경우
-    $("#next").on("click",function(){
-        page++;
-        getList();
+        let index=$(this).attr("index")
+        $("#modal"+ index).modal("show");
     });
 
-    //이전 버튼을 클릭한 경우
-    $("#prev").on("click",function(){
-        page--;
-        getList();
-    });
-
-
-    $(frm).on("submit",function(e){
-        e.preventDefault();
+$(frm).on("submit", function(e){
+    e.preventDefault();
+    query=$(frm.query).val();
+    if(query==""){
+        alert("검색 내용을 입력하세요!");
+        $(frm.qurey).focus();
+    }else{
         page=1;
-        query=$(frm.query).val();
         getList();
-    });
-
-    getList();
-    function getList(){
-        $.ajax({
-            type: "get",
-            url:"https://dapi.kakao.com/v3/search/book?target=title",
-            headers:{"Authorization":"KakaoAK 0ce6a96a5ed5d1b040aba0dc387cc85c"},
-            data:{query:query,page:page,size:6},
-            success:function(data){
-                console.log(data);
-                let temp=Handlebars.compile($("#temp_books").html());
-                 $("#div_books").html(temp(data));
-                 
-                 let last = Math.ceil(data.meta.pageable_count/5);
-                 $("#span_page").html(page + "/" + last);
-                 
-                 if(page==1) $("#prev").attr("disabled",true)
-                 else $("#prev").attr("disabled", false)
-
-                 if(data.meta.is_end) $("#next").attr("disabled",true);
-                 else $("#next").attr("disabled", false);
-            }
-        })
     }
+});
+
+
+$("#next").on("click", function(){
+    page++
+    getList();
+}) //다음 페이지
+
+$("#prev").on("click", function(){
+    page--
+    getList();
+}) //이전 페이지
+
+getList();
+function getList(){
+    $.ajax({
+        type: 'get',
+        url:'https://dapi.kakao.com/v3/search/book?target=title',
+        headers:{'Authorization':'KakaoAK 0ce6a96a5ed5d1b040aba0dc387cc85c'},
+        data:{query:query,page:page,size:6},
+        dataType:'json',
+
+        success:function(data){
+            const temp=Handlebars.compile($("#temp_books").html());
+            $("#div_books").html(temp(data))
+
+            if(page==1) {
+                $("#prev").attr("disabled", true);
+            } else {
+                $("#prev").attr("disabled", false);
+            } // 1페이지에서는 페이지 넘기는 기능을 disabled. 1페이지아닐경우 false.
+
+            if(data.meta.is_end){
+                $('#next').attr("disabled", true);
+            } else {
+                $('#next').attr("disabled", false);
+            }
+
+            let last=Math.ceil(data.meta.pageable_count/6);
+            // 마지막 페이지가 몇페이지인지 계산하는 함수.
+
+            if(data.meta.pageable_count>0){
+                $("div_page").show(); 
+                $("#span_page").html(page+"/"+last); 
+                // page 는 현재페이지, last 마지막페이지
+            } else {
+                $("#div_page").hide()
+                $("#div_books").html(`<h1 class='text-center'>'${query}' 도서가 존재하지 않습니다.</hl1>`)
+            }
+        }
+    })
+}
 </script>

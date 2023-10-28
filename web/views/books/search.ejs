@@ -1,104 +1,115 @@
 <div class="row my-5">
     <div class="col">
-        <h1 class="text-center">Book Search</h1>
-        <div class="row mb-2 justify-content-end">
-            <form name="frm" class = "col-6 col-md-4 col-lg-3">
+        <h1 class="text-center mb-5">도서검색</h1>
+        <div class="row justify-content-end">
+            <form class="col-6 col-lg-3 col-md-4" name="frm">
                 <div class="input-group">
-                    <input name="query" class="form-cotrol" value="자바">
-                    <button class="btn btn-secondary">Search</button>
+                    <input class="form-control" placeholder="검색어" name="query" value="자바">
+                    <button class="btn btn-primary">검색</button>
                 </div>
             </form>
         </div>
         <hr>
-        <div id="div_books"></div>
-        <!--페이지 이동-->
-        <div class= "text-center">
-            <button id = "prev" class="btn btn-secondary">이전</button>
+        <div id="div_books" class="row"></div>
+        <div class="text-center mt-3" id="div_page">
+            <button class="btn btn-primary" id="prev">이전</button>
             <span class="mx-3" id="span_page">1/10</span>
-            <button id = "next" class= "btn btn-secondary">다음</button>
+            <button class="btn btn-primary" id="next">다음</button>
         </div>
     </div>
 </div>
-<script type="x-handlebars-template" id="temp_books">
-    <table class = "table">
-    {{#each documents}}
-        <tr>
-            <td><img src="{{chkImage thumbnail}}" width="50"></td>
-            <td>{{title}}</td>
-            <td>{{fmtPrice price}}</td>
-            <td>{{authors}}</td>
-            <td><button class="btn btn-secondary" index="{{@index}}">도서정보</button></td>
-        </tr>
-        <%-include('modal.ejs')%>
-    {{/each}}
-    </table>
 
+<script id="temp_books" type="x-handlebars-template">
+    <table class="table">
+        {{#each documents}}
+        <tr>
+            <td><img src="{{chk_thumbnail thumbnail}}" index="{{@index}}" width="50"</td>
+            <td>{{title}}</td>
+            <td>{{fmt_price price}}</td>
+            <td>{{authors}}</td>
+        </tr>
+        {{/each}}
+    </table>
 </script>
 
-<!--Handlebars 함수-->
 <script>
-    Handlebars.registerHelper("chkImage", function(image){
-        if(image){
-            return image;
+
+    Handlebars.registerHelper("chk_thumbnail", function(thumbnail){
+        if(!thumbnail) {
+            return "http://via.placeholder.com/120x170";
         }else{
-            return "https://via.placeholder.com/120x170"
+            return thumbnail;
         }
     });
 
-    Handlebars.registerHelper("fmtPrice", function(price){
-        if(price) return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',') + '원';
-    });
-</script>
-
-<script>
-    let query=$(frm.query).val();
-    let page=1;
-    //도서정보 버튼을 클릭한 경우
-    $("#div_books").on("click",".btn-secondary",function(){
-        let index=$(this).attr("index");
-        $("#modal" + index).modal("show");
+    Handlebars.registerHelper("fmt_price", function(price){
+        if(price) return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',')+'원';
     });
 
-    $("#next").on("click",function(){
-        page++;
-        getBooks();
-    });
+let query=$(frm.query).val();
+let page=1;
 
-    $("#prev").on("click",function(){
-        page--;
-        getBooks();
-    });
 
-    
-    $(frm).on("submit",function(e){
-        e.preventDefault();
-        page=1
-        query=$(frm.query).val();
-        getBooks();
-    });
-
-    getBooks();
-    //도서검색 데이터 불러오깅
-    function getBooks(){
-        $.ajax({
-            type:"get",
-            url:"https://dapi.kakao.com/v3/search/book?target=title",
-            headers:{"Authorization":"KakaoAK 0ce6a96a5ed5d1b040aba0dc387cc85c"},
-            data:{query:query, page:page, size:5},
-            success:function(data){
-                 console.log(data);
-                 let temp=Handlebars.compile($("#temp_books").html());
-                 $("#div_books").html(temp(data));
-                 let last = Math.ceil(data.meta.pageable_count/5);
-                 $("#span_page").html(page + "/" + last);
-                 
-                 if(page==1) $("#prev").attr("disabled",true)
-                 else $("#prev").attr("disabled", false)
-
-                 if(data.meta.is_end) $("#next").attr("disabled",true);
-                 else $("#next").attr("disabled", false);
-            }   
-        
-        })
+$(frm).on("submit", function(e){
+    e.preventDefault();
+    query=$(frm.query).val();
+    if(query==""){
+        alert("검색 내용을 입력하세요!");
+        $(frm.qurey).focus();
+    }else{
+        page=1;
+        getList();
     }
+});
+
+
+$("#next").on("click", function(){
+    page++
+    getList();
+}) //다음 페이지
+
+$("#prev").on("click", function(){
+    page--
+    getList();
+}) //이전 페이지
+
+getList();
+function getList(){
+    $.ajax({
+        type: 'get',
+        url:'https://dapi.kakao.com/v3/search/book?target=title',
+        headers:{'Authorization':'KakaoAK 0ce6a96a5ed5d1b040aba0dc387cc85c'},
+        data:{query:query,page:page,size:6},
+        dataType:'json',
+
+        success:function(data){
+            const temp=Handlebars.compile($("#temp_books").html());
+            $("#div_books").html(temp(data))
+
+            if(page==1) {
+                $("#prev").attr("disabled", true);
+            } else {
+                $("#prev").attr("disabled", false);
+            } // 1페이지에서는 페이지 넘기는 기능을 disabled. 1페이지아닐경우 false.
+
+            if(data.meta.is_end){
+                $('#next').attr("disabled", true);
+            } else {
+                $('#next').attr("disabled", false);
+            }
+
+            let last=Math.ceil(data.meta.pageable_count/6);
+            // 마지막 페이지가 몇페이지인지 계산하는 함수.
+
+            if(data.meta.pageable_count>0){
+                $("div_page").show(); 
+                $("#span_page").html(page+"/"+last); 
+                // page 는 현재페이지, last 마지막페이지
+            } else {
+                $("#div_page").hide()
+                $("#div_books").html(`<h1 class='text-center'>'${query}' 도서가 존재하지 않습니다.</hl1>`)
+            }
+        }
+    })
+}
 </script>

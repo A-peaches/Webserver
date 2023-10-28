@@ -1,47 +1,49 @@
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
-      <a class="navbar-brand" href="/">HOME</a>
+      <a class="navbar-brand" href="/">Home</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="/books">Book Search</a>
+            <a class="nav-link active" aria-current="page" href="/books">도서검색</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="/locals">Local Search</a>
+            <a class="nav-link active" aria-current="page" href="/locals">지역검색</a>
           </li>
           <li class="nav-item" id="cart" style="display:none;">
-            <a class="nav-link active" aria-current="page" href="/books/cart">Cart</a>
+            <a class="nav-link active" aria-current="page" href="/books/cart">장바구니</a>
           </li>
-        </ul>
-        <ul class="navbar-nav d-flex"> 
+          <li class="nav-item" id="favorite" style="display:none;">
+            <a class="nav-link active" aria-current="page" href="/locals/favorite">즐겨찾기</a>
+          </li>
+          </ul>
+          <ul class="navbar-nav d-flex">
             <li class="nav-item" id="login">
               <a class="nav-link active" aria-current="page" href="/users/login">LOGIN</a>
             </li>
-            <li class="nav-item" id="email" style="display:none;">
-              <a class="nav-link active" aria-current="page" href="/users/login">E-Mail</a>
+            <li class="nav-item" id="email" style="display:none">
+              <a class="nav-link active" aria-current="page" href="/users/mypage">email</a>
             </li>
-            <li class="nav-item" id="logout" style="display:none;">
-              <!--로그인 안했을떈 보이면 안되어서 none-->
-              <a class="nav-link active" aria-current="page" href="/users/login">LOGOUT</a>
+            <li class="nav-item"id="logout" style="display:none">
+              <a class="nav-link active" aria-current="page" href="/users/logout">로그아웃</a>
             </li>
           </ul>
       </div>
     </div>
   </nav>
+
   <script>
     if(sessionStorage.getItem("email")){
-      $("#login, #email, #logout, #cart").toggle(); //있으면! 보이는건안보이게~안보이던건 보이게
+      $("#login, #logout, #email, #cart, #favorite").toggle();
       $("#email a").html(sessionStorage.getItem("email"));
     }
 
     $("#logout").on("click", "a", function(e){
       e.preventDefault();
-      if(confirm("정말로 로그아웃하실래요?")){
-        sessionStorage.clear(); //로그인정보 삭제
-        location.href="/";
-      }
-    })
+      if(!confirm("로그아웃 하실래요?")) return;
+      sessionStorage.clear();
+      location.href="/"
+    });
   </script>
